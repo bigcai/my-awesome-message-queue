@@ -1,0 +1,18 @@
+- 生产时产生 queueIndex,设置queueName、queuePageId(根据queue_data页游标获取，页游标记录了pageId和offset)，myposition=顺序写入queueIndexMapedByteBuffer的位置(写入时记录),startPosition=页游标offset并序列化写入。
+
+-queue_data页游标的pageId是最大***-queue_data的pageId,offset是所有pageid为该pageID的queueIndex中最大offset。pageId为该pageID的queueIndex一般都位于队列的尾部。
+
+-创建queueIndex时要看看该索引对应的queueData页段是否用完了，用完了就创建新的queueIndex索引，并从***-queue_data中获取页游标作为新queueIndex.startPosition。
+
+- 创建queueData时，设置queueID.
+
+-写入messageData时，从queueData中获取pageId，检测该pageId对应的页是否大于max_message_data_size，如果否，则顺序写入，否则扫描messageData文件列表，获得pageID最大messsage_data文件，如果该文件size大于max_message_data_size,则创建新的messageData文件，并将最大的pageID到queueData.pageId中。返回写入的起始位置，以及消息长度，用于设置queueData的startposition和endposition.
+
+-先写入queueData
+
+- 遍历所有queueIndex，对pageId建立map,遍历所有页，如果该页所有的queueIndex的读指针和写指针都在结束为止，则证明消费完，将该页关闭.
+
+- 定时器扫描messageData的文件列表，如果该文件大于或者等于max_message_data_size则关闭该文件映射。
+
+
+

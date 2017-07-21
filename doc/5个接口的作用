@@ -1,0 +1,31 @@
+1.创建Topic消息  Producer的createBytesMessageToTopic(topic, body)
+该消息会被多人消费。
+该消息再内存快速压缩再放置到硬盘会快很多。
+  可以采用批量分段压缩（是否支持压缩呢？）。
+  Topic产生的时候就注定了他要发给指定的Topic了，
+  但是却不知道会被那个Quenen拿去，直到Queue和他绑定后拿走。
+  这个方法不要求线程安全;
+2.创建Queue消息 Producer的createBytesMessageToQueue(queue, body)
+该消息只被Consumer消费
+Quenen消息被生成出来就已经注定被送给那个Quenen了。
+ queue在什么时候和消费者绑定（在attachTopic接口中，绑定consumer+queue+topic）
+ 这个方法不要求线程安全;
+3.发送消息  Producer的send(message)
+这方法线程安全。
+
+ 这个方法不需要线程安全（因为线程独立调用生产者）
+ 不过内部写入缓存需要保证线程安全（Demo用了同步方法）
+ 将对于的消息写入对应的队列
+4.绑定queue和Topic PullConsumer的attachQueue(queue, topics)
+ 这个方法也是线程安全
+ 单纯标记消费者拥有的List?
+5.取消息 PullConsumer的pullNoWait()
+这个方法内部读取缓存需要保证线程安全
+quenen中消息被取后，不能再被消费，
+Topic中的消息被取后可以再被消费吗？（不可以）
+   一个Topic被多个Queue抢食，
+   一个消费者拥有1个Queue和多个Topic
+   消费者消费Queue不加锁，
+   消费者消费Topic需要加锁
+   官方没有区分Topic和Queue，而且都用了同步方法
+   官方没有利用4G的内存消费 官方用的T1和T2最小多少
